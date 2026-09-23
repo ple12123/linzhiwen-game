@@ -72,7 +72,11 @@
   .textbox.narrbox .dialog-text {
     text-align: center; color: #dfe7f5; font-size: clamp(15px, 2.25vh, 22px); line-height: 1.95;
   }
+  .textbox.narrbox.notebox { background: rgba(10, 14, 30, .62); border-color: rgba(150, 180, 220, .22); }
+  .textbox.narrbox .dialog-text.nred  { color: #ff9a9a; font-size: clamp(13px, 1.95vh, 19px); }
+  .textbox.narrbox .dialog-text.nblue { color: #8fc4ff; font-size: clamp(13px, 1.95vh, 19px); }
   .note-text { font-size: clamp(13px, 1.9vh, 18px); color: #ff9a9a; margin-top: 10px; letter-spacing: .02em; }
+  .note-text.blue { color: #8fc4ff; }
 
   /* ---------- 旁白 ---------- */
   .narration {
@@ -255,6 +259,7 @@ const SCRIPT = [
   { t: "bg", v: "cg1", f: "none" },
   { t: "n", v: "体育委员手里握着笔，面前摊着一张皱巴巴的报名表。我走过去，站定。" },
   { t: "d", name: "治文", v: "100米、200米、400米、800米、1000米、2000米——我都报。" },
+  { t: "note", v: "旁批：完全虚构" },
   { t: "n", v: "他手里的笔停住了。抬起头，看了我一眼，又低头去看名单。" },
   { t: "d", name: "体育委员", v: "……你再说一遍？" },
   { t: "d", name: "治文", v: "100米、200米、400米、800米、1000米、2000米。" },
@@ -267,29 +272,38 @@ const SCRIPT = [
   { t: "n", v: "报名之后的日子，过得比跑道上的脚步还快。" },
   { t: "n", v: "课间十分钟，走廊上闹成一团。我埋着头，补前几天欠下的作业。笔尖在纸上沙沙地响。" },
   { t: "n", v: "前桌的同学回过头来，看了我很久。" },
-  { t: "d", name: "同学", v: "你也太能写了吧。" },
+  { t: "d", name: "同学", v: "你个胖子也太能写了吧。" },
+  { t: "d", name: "同学", v: "是哦是哦，他好会学习哦。" },
+  { t: "note", v: "旁批：我认为我们班上的人就算看到也不会说这种话" },
   { t: "n", v: "我笑了一下，没抬头。" },
-  { t: "n", v: "作业是自己欠下的，总得自己补上。就像跑道是自己报的，总得自己跑完。" },
+  { t: "n", v: "周围同学的惊叹声不断在我耳边迂回，我享受着这一刻的快感。" },
+  { t: "note", v: "旁批：那不是嘉豪吗" },
+  { t: "noteBlue", v: "旁批：（没那么低调）" },
 
   { t: "place", v: "冲向食堂", sub: "中午 · 下课铃响" },
   { t: "bg", v: "noon", f: "none" },
   { t: "n", v: "要说一天里最要紧的，还是中午那顿饭。" },
   { t: "n", v: "铃声一响，我从座位上弹起来，冲出教室，沿着楼梯一路往下，穿过操场，直奔食堂。" },
+  { t: "n", v: "我又是全校第一个到达食堂的，仅用时 0.91s。" },
+  { t: "noteBlue", v: "旁批：没那么慢" },
   { t: "n", v: "等我端着餐盘坐下来，身边才有同学陆续进来，扶着椅子喘气。" },
   { t: "d", name: "同学", v: "你跑得太快了……等等我们啊。" },
   { t: "n", v: "我低头吃饭，没答话。" },
   { t: "n", v: "跑得快，也得吃得饱。这是我自己总结出来的道理。" },
+  { t: "n", v: "我的生活本该一直这样持续下去。" },
 
   { t: "place", v: "起跑线前", sub: "运动会当日" },
   { t: "bg", v: "cg2", f: "none" },
+  { t: "n", v: "直到……" },
   { t: "n", v: "运动会那天终于来了。" },
   { t: "n", v: "我站在起跑线后面，弯下腰，手指抵着地面。四周很吵，广播和看台的喊声混成一片，吵得我听不清自己在想什么。" },
   { t: "n", v: "我盯着前方的跑道。就在这一刻——" },
   { t: "d", name: "同学", v: "加油，跑就完了！" },
+  { t: "d", name: "同学", v: "你知道吗，据说人家博尔特苏炳添什么的运动员都过来看哪个胖子跑步了。" },
+  { t: "note", v: "旁批：真tm猎奇" },
   { t: "n", v: "那句话穿过所有的吵闹声，落进耳朵里。" },
   { t: "n", v: "是班上同学喊的。声音不大，但很清楚。" },
-  { t: "n", v: "忽然就不紧张了。" },
-  { t: "n", v: "原来被人喊一句，是这种感觉。" },
+  { t: "n", v: "我并没有感受到什么压力。压力这种东西，还是留给其他选手吧。" },
 
   { t: "place", v: "那个声音", sub: "运动会当日 · 起跑线前" },
   { t: "d", name: "？？？", v: "加油，我看好你哟" },
@@ -320,11 +334,13 @@ const SCRIPT = [
   { t: "n", v: "砰——枪声响起。我冲出起跑线，轻轻松松到达终点。" },
   { t: "d", name: "主持人", v: "冲线了，冲线了，是林治文！是第一个冲过终点线的！" },
   { t: "d", name: "???", v: "哇、他好帅啊。" },
+  { t: "note", v: "旁批：写到这没绷住" },
   { t: "n", v: "嗯？这到底是谁？她……她是在说我吗？" },
 
   { t: "place", v: "全部拿捏", sub: "运动会当日 · 3000m" },
   { t: "n", v: "接下来的项目，我都像这样轻松拿捏。" },
   { t: "n", v: "也包括跑 3000m 的时候——我全程的速度控制在 30～35 m/s 左右。" },
+  { t: "note", v: "旁批：他简直是超人" },
   { t: "n", v: "对我来说，这些都轻而易举。" },
 
   { t: "place", v: "闭幕", sub: "运动会当日 · 操场" },
@@ -584,11 +600,15 @@ function renderItem(auto) {
     tx.className = "dialog-text typing";
     tx.dataset.full = "「" + s.v + "」";
     box.appendChild(nl); box.appendChild(tx);
-    if (SCRIPT[idx + 1] && SCRIPT[idx + 1].t === "note") {
+    function addNote(n) {
       const nt = document.createElement("div");
-      nt.className = "note-text";
-      nt.textContent = SCRIPT[idx + 1].v;
+      nt.className = "note-text" + (n.t === "noteBlue" ? " blue" : "");
+      nt.textContent = n.v;
       box.appendChild(nt);
+    }
+    let nx = idx + 1;
+    while (SCRIPT[nx] && (SCRIPT[nx].t === "note" || SCRIPT[nx].t === "noteBlue")) {
+      addNote(SCRIPT[nx]); nx++;
     }
     const nm = document.createElement("div");
     nm.className = "nextmark";
@@ -596,19 +616,20 @@ function renderItem(auto) {
     wrap.appendChild(box);
     typeText(tx, "「" + s.v + "」", 24);
     idx++;
-    if (SCRIPT[idx] && SCRIPT[idx].t === "note") idx++;
+    while (SCRIPT[idx] && (SCRIPT[idx].t === "note" || SCRIPT[idx].t === "noteBlue")) idx++;
     if (autoMode) scheduleAuto();
     return;
   }
 
-  if (s.t === "n" || s.t === "note") {
+  if (s.t === "n" || s.t === "note" || s.t === "noteBlue") {
     mode = "playing";
     if (s.t === "n") history.push({ name: "", text: s.v });
     // 旁白也使用对话框（无名字栏，文字居中）
+    const isNote = (s.t === "note" || s.t === "noteBlue");
     const box = document.createElement("div");
-    box.className = "textbox narrbox";
+    box.className = "textbox narrbox" + (isNote ? " notebox" : "");
     const tx = document.createElement("div");
-    tx.className = "dialog-text typing";
+    tx.className = "dialog-text typing" + (isNote ? (s.t === "noteBlue" ? " nblue" : " nred") : "");
     tx.dataset.full = s.v;
     box.appendChild(tx);
     const nm = document.createElement("div");
