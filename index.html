@@ -175,6 +175,36 @@
   .volbar label { font-size: clamp(10px,1.45vh,13px); color: #bcd6f2; letter-spacing:.06em; }
   .volbar input[type=range] { width: 110px; accent-color: #5fa8f0; }
 
+
+  /* ---------- 更新日志 ---------- */
+  .changelog-btn {
+    position: absolute; right: 18px; bottom: 16px; z-index: 22;
+    cursor: pointer; font-family: inherit; font-size: clamp(11px, 1.55vh, 15px);
+    background: rgba(10, 20, 44, .62); border: 1px solid rgba(160, 200, 255, .3);
+    color: #a8c4e6; border-radius: 7px; padding: 6px 15px; letter-spacing: .08em;
+    transition: background .15s ease, color .15s ease;
+  }
+  .changelog-btn:hover { background: rgba(30, 60, 110, .85); color: #fff; }
+  .changelog-panel {
+    position: absolute; inset: 0; z-index: 40; display: none;
+    background: rgba(6, 10, 22, .95); overflow-y: auto; padding: 46px 8% 40px;
+  }
+  .changelog-panel.show { display: block; }
+  .changelog-panel h3 {
+    color: #8fc0ff; font-size: clamp(14px, 2vh, 19px); letter-spacing: .2em; margin-bottom: 6px;
+  }
+  .changelog-panel .cl-sub {
+    color: rgba(255,255,255,.35); font-size: clamp(10px, 1.45vh, 13px);
+    letter-spacing: .06em; margin-bottom: 22px;
+  }
+  .cl-item { margin-bottom: 22px; padding-left: 16px; border-left: 2px solid rgba(90,140,210,.35); }
+  .cl-item .cl-ver { color: #7fc0ff; font-weight: 700; font-size: clamp(12px, 1.8vh, 17px); letter-spacing: .05em; }
+  .cl-item .cl-date { color: rgba(255,255,255,.32); font-size: clamp(10px, 1.4vh, 13px); margin-left: 10px; letter-spacing: .04em; }
+  .cl-item ul { margin: 8px 0 0; padding-left: 18px; }
+  .cl-item li {
+    color: #d5e2f2; font-size: clamp(11px, 1.7vh, 16px); line-height: 1.85; margin-bottom: 3px;
+  }
+  .cl-close { position: fixed; top: 14px; right: 16px; z-index: 41; }
   /* ---------- 历史面板 ---------- */
   .history {
     position: absolute; inset: 0; z-index: 30; background: rgba(6,10,22,.95);
@@ -229,6 +259,12 @@
       <button id="btnSkip">跳过</button>
       <button id="btnHist">历史</button>
       <button id="btnTitle">标题</button>
+    </div>
+
+    <div class="changelog-panel" id="changelogPanel">
+      <h3>更 新 日 志</h3>
+      <div class="cl-sub">CHANGELOG</div>
+      <div id="changelogList"></div>
     </div>
     <div class="history" id="histPanel">
       <h3>历 史</h3>
@@ -563,6 +599,50 @@ const AFTER_SCRIPT = [
   { t: "end", no: "01", name: "绫 · 后日谈" }
 ];
 
+
+/* ================= 更新日志 ================= */
+/* 想增删改条目，直接编辑下面这个数组即可，最新的一条放最前面 */
+const CHANGELOG = [
+  { ver: "v1.4", date: "2026-10-10", items: [
+      "后日谈内容更新"
+  ]},
+  { ver: "v1.3", date: "2026-10-10", items: [
+      "新增「绫线 · 后日谈」：通关 END 01 后于标题画面解锁",
+      "新增 2 张 CG：雨中奔跑、图书馆负一楼窗边",
+      "修复后日谈误显示正篇旁批的问题"
+  ]},
+  { ver: "v1.2", date: "2026-10-10", items: [
+      "加入 BGM：日常／运动会／黄昏三段，按场景自动切换",
+      "新增 ♪ 音乐 按钮与音量调节",
+      "旁批系统：红字为原稿旁批，蓝字为补充批注，可连续显示多条",
+      "旁白改为对话框显示"
+  ]},
+  { ver: "v1.1", date: "2026-10-05", items: [
+      "背景图重制，去除画面内嵌的对话框",
+      "重制教室场景构图与透视",
+      "新增 favicon 与分享卡片"
+  ]},
+  { ver: "v1.0", date: "2026-09-24", items: [
+      "初版发布：4 个选择点、3 个结局"
+  ]}
+];
+
+function renderChangelog() {
+  const el = document.getElementById("changelogList");
+  el.innerHTML = CHANGELOG.map(v =>
+    '<div class="cl-item">' +
+      '<span class="cl-ver">' + v.ver + '</span>' +
+      '<span class="cl-date">' + v.date + '</span>' +
+      '<ul>' + v.items.map(t => '<li>' + t + '</li>').join('') + '</ul>' +
+    '</div>'
+  ).join('');
+}
+
+function showChangelog() {
+  renderChangelog();
+  document.getElementById("changelogPanel").classList.add("show");
+}
+
 /* ================= 引擎 ================= */
 const stage = document.getElementById("stage");
 const content = document.getElementById("content");
@@ -839,10 +919,28 @@ function showTitle() {
   };
   box.appendChild(b2);
   content.appendChild(box);
+  appendChangelogBtn();
+}
+
+/* 标题画面右下角的更新日志按钮 */
+function appendChangelogBtn() {
+  const old = document.getElementById("clBtn");
+  if (old) old.remove();
+  const btn = document.createElement("button");
+  btn.id = "clBtn";
+  btn.className = "changelog-btn";
+  btn.textContent = "更新日志";
+  btn.onclick = (e) => { e.stopPropagation(); showChangelog(); };
+  stage.appendChild(btn);
+}
+function removeChangelogBtn() {
+  const old = document.getElementById("clBtn");
+  if (old) old.remove();
 }
 
 function startAfter() {
   mode = "playing";
+  removeChangelogBtn();
   curScript = AFTER_SCRIPT; isAfter = true;
   idx = 0; history = []; choices = [];
   toolbar.style.display = "flex";
@@ -855,6 +953,7 @@ function startAfter() {
 
 function startGame() {
   mode = "playing";
+  removeChangelogBtn();
   curScript = SCRIPT; isAfter = false;
   bgmInit();
   bgmPlay("daily");
@@ -883,12 +982,18 @@ function skipToChoice() {
 
 /* ---------- 事件 ---------- */
 stage.addEventListener("click", () => {
+  if (document.getElementById("changelogPanel").classList.contains("show")) return;
   if (histPanel.classList.contains("show")) return;
   if (mode === "title") return;
   if (mode === "ending") return;
   advance();
 });
 document.addEventListener("keydown", (e) => {
+  if (e.code === "Escape") {
+    document.getElementById("changelogPanel").classList.remove("show");
+    histPanel.classList.remove("show");
+    return;
+  }
   if (e.code === "Space" || e.code === "Enter") {
     e.preventDefault();
     if (mode === "title") { startGame(); return; }
@@ -918,6 +1023,13 @@ closeBtn.className = "btn-ghost closebtn";
 closeBtn.textContent = "关闭";
 closeBtn.onclick = (e) => { e.stopPropagation(); histPanel.classList.remove("show"); };
 histPanel.appendChild(closeBtn);
+
+/* 更新日志面板的关闭按钮 */
+const clClose = document.createElement("button");
+clClose.className = "btn-ghost cl-close";
+clClose.textContent = "关闭";
+clClose.onclick = (e) => { e.stopPropagation(); document.getElementById("changelogPanel").classList.remove("show"); };
+document.getElementById("changelogPanel").appendChild(clClose);
 
 showTitle();
 </script>
