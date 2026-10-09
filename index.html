@@ -217,6 +217,42 @@
   .history .hitem .hplace { color: rgba(255,255,255,.38); font-style: italic; }
   .history .closebtn { position: fixed; top: 14px; right: 16px; }
 
+
+  /* ---------- 自动播放指示器 ---------- */
+  .autobar {
+    position: absolute; right: 15px; bottom: 11px;
+    display: flex; align-items: center; gap: 8px; pointer-events: none;
+    padding: 4px 10px 4px 9px; border-radius: 20px;
+    background: rgba(6, 14, 34, .55);
+    border: 1px solid rgba(120, 175, 240, .35);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .35);
+  }
+  .autobar .atxt {
+    font-size: clamp(9px, 1.35vh, 13px); color: #a8d4ff;
+    letter-spacing: .2em; font-weight: 700;
+    text-shadow: 0 0 8px rgba(120, 190, 255, .55);
+    animation: autopulse 1.15s ease-in-out infinite;
+  }
+  @keyframes autopulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+  .autobar .atrack {
+    position: relative;
+    width: clamp(56px, 9vw, 88px); height: 5px; border-radius: 3px;
+    background: rgba(255, 255, 255, .13);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .45);
+    overflow: hidden;
+  }
+  .autobar .afill {
+    display: block; height: 100%; width: 0%; border-radius: 3px;
+    background: linear-gradient(90deg, #3d8fe0 0%, #6fb6f5 55%, #bfe2ff 100%);
+    box-shadow: 0 0 8px rgba(110, 180, 250, .85);
+  }
+  .autobar .adot {
+    position: absolute; top: 50%; left: 0; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px;
+    border-radius: 50%; background: #ffffff;
+    box-shadow: 0 0 9px 2px rgba(160, 215, 255, .95);
+  }
+  /* 自动模式下隐藏闪烁的点击指示 */
+  .textbox.auto-on .nextmark, .narration-wrap.auto-on .nextmark { display: none; }
   /* ---------- 点击指示 ---------- */
   .nextmark {
     position: absolute; right: 8%; bottom: 6.5%; width: 14px; height: 14px;
@@ -255,12 +291,18 @@
 
     <div id="content"></div>
     <div class="toolbar" id="toolbar" style="display:none">
+      <button id="btnBgm">♪ 音乐</button>
       <button id="btnAuto">自动</button>
       <button id="btnSkip">跳过</button>
       <button id="btnHist">历史</button>
       <button id="btnTitle">标题</button>
     </div>
 
+    <div class="volbar" id="volBar">
+      <label>音量</label>
+      <input type="range" id="volRange" min="0" max="100" value="35">
+      <button class="btn-ghost" id="volClose" style="padding:3px 10px;font-size:12px">完成</button>
+    </div>
     <div class="changelog-panel" id="changelogPanel">
       <h3>更 新 日 志</h3>
       <div class="cl-sub">CHANGELOG</div>
@@ -603,6 +645,12 @@ const AFTER_SCRIPT = [
 /* ================= 更新日志 ================= */
 /* 想增删改条目，直接编辑下面这个数组即可，最新的一条放最前面 */
 const CHANGELOG = [
+  { ver: "v1.5", date: "2026-10-10", items: [
+      "自动播放新增 AUTO 进度指示器：对话框右下角显示 AUTO 字样与逐帧推进的进度条",
+      "进度条强化视觉：加粗至 5px、胶囊底框、蓝色渐变填充带辉光、末端跟随高光圆点",
+      "AUTO 字样加入呼吸闪烁效果",
+      "自动模式下自动隐藏原有的闪烁点击箭头，避免两个指示器重叠"
+  ]},
   { ver: "v1.4", date: "2026-10-10", items: [
       "后日谈内容更新"
   ]},
@@ -749,6 +797,7 @@ function renderItem(auto) {
   const s = curScript[idx];
 
   content.innerHTML = "";
+  if (!autoMode) clearAutoBar();
   const wrap = document.createElement("div");
   wrap.className = "fade";
   content.appendChild(wrap);
@@ -865,18 +914,89 @@ function renderItem(auto) {
 
 function scheduleAuto(extra) {
   if (autoTimer) clearTimeout(autoTimer);
-  autoTimer = setTimeout(() => { if (autoMode && mode === "playing") advance(); }, extra || 2300);
+  const d = extra || 2300;
+  autoTimer = setTimeout(() => { if (autoMode && mode === "playing") advance(); }, d);
+  if (autoMode && mode === "playing") startAutoTick(d);
 }
 
 function advance() {
   if (mode !== "playing") return;
   if (!typingDone) { finishTyping(); return; }
+  clearAutoBar();
   renderItem();
 }
 
+
+/* ---------- 自动播放指示器（JS 驱动，逐帧更新） ---------- */
+let autoDelay = 2300;
+let autoStartAt = 0;        // 本句开始自动等待的时间戳
+let autoRafId = null;
+
+function makeAutoBar() {
+  const bar = document.createElement("div");
+  bar.className = "autobar";
+  const t = document.createElement("span");
+  t.className = "atxt";
+  t.textContent = "AUTO";
+  const track = document.createElement("span");
+  track.className = "atrack";
+  const fill = document.createElement("span");
+  fill.className = "afill";
+  const dot = document.createElement("span");
+  dot.className = "adot";
+  track.appendChild(fill);
+  track.appendChild(dot);
+  bar.appendChild(t);
+  bar.appendChild(track);
+  return bar;
+}
+
+/* 确保当前对话框上挂着指示器；没有就新建 */
+function ensureAutoBar() {
+  let box = content.querySelector(".textbox");
+  if (!box) return null;
+  box.classList.add("auto-on");
+  let bar = box.querySelector(".autobar");
+  if (!bar) {
+    bar = makeAutoBar();
+    box.appendChild(bar);
+  }
+  return bar;
+}
+
+/* 逐帧推进进度条 */
+function tickAutoBar() {
+  autoRafId = null;
+  if (!autoMode || mode !== "playing") { return; }
+  const bar = ensureAutoBar();
+  if (!bar) { autoRafId = requestAnimationFrame(tickAutoBar); return; }
+  const elapsed = performance.now() - autoStartAt;
+  let pct = autoDelay > 0 ? elapsed / autoDelay : 1;
+  if (pct < 0) pct = 0; if (pct > 1) pct = 1;
+  const pctStr = (pct * 100).toFixed(1) + "%";
+  bar.querySelector(".afill").style.width = pctStr;
+  bar.querySelector(".adot").style.left = pctStr;
+  autoRafId = requestAnimationFrame(tickAutoBar);
+}
+
+function startAutoTick(delay) {
+  autoDelay = delay;
+  autoStartAt = performance.now();
+  if (autoRafId) cancelAnimationFrame(autoRafId);
+  autoRafId = requestAnimationFrame(tickAutoBar);
+}
+
+function clearAutoBar() {
+  if (autoRafId) { cancelAnimationFrame(autoRafId); autoRafId = null; }
+  document.querySelectorAll(".autobar").forEach(n => n.remove());
+  document.querySelectorAll(".auto-on").forEach(n => n.classList.remove("auto-on"));
+}
+
 /* ---------- 标题 ---------- */
+
 function showTitle() {
   mode = "title";
+  clearAutoBar();
   bgmPlay("daily");
   idx = 0; history = []; choices = [];
   if (autoTimer) clearTimeout(autoTimer); autoMode = false;
@@ -915,7 +1035,7 @@ function showTitle() {
   b2.textContent = "操作说明";
   b2.onclick = (e) => {
     e.stopPropagation();
-    alert("点击画面 / 空格 / 回车：推进对话\n自动：自动播放\n跳过：快进到下一个选项\n历史：查看已读文本\n\n共 4 个选择点、3 个结局。");
+    alert("点击画面 / 空格 / 回车：推进对话\n♪ 音乐：切换 BGM 与音量\n自动：自动播放\n跳过：快进到下一个选项\n历史：查看已读文本\n\n共 4 个选择点、3 个结局。");
   };
   box.appendChild(b2);
   content.appendChild(box);
@@ -1005,8 +1125,26 @@ document.getElementById("btnAuto").onclick = (e) => {
   e.stopPropagation();
   autoMode = !autoMode;
   document.getElementById("btnAuto").classList.toggle("on", autoMode);
-  if (!autoMode && autoTimer) clearTimeout(autoTimer);
-  if (autoMode && mode === "playing") scheduleAuto(600);
+  if (!autoMode) {
+    if (autoTimer) clearTimeout(autoTimer);
+    clearAutoBar();
+  } else if (mode === "playing") {
+    scheduleAuto(600);
+  }
+};
+document.getElementById("btnBgm").onclick = (e) => {
+  e.stopPropagation();
+  const vb = document.getElementById("volBar");
+  vb.classList.toggle("show");
+  document.getElementById("btnBgm").classList.toggle("on", vb.classList.contains("show"));
+};
+document.getElementById("volRange").oninput = (e) => {
+  bgmSetVol(parseInt(e.target.value, 10) / 100);
+};
+document.getElementById("volClose").onclick = (e) => {
+  e.stopPropagation();
+  document.getElementById("volBar").classList.remove("show");
+  document.getElementById("btnBgm").classList.remove("on");
 };
 document.getElementById("btnSkip").onclick = (e) => { e.stopPropagation(); skipToChoice(); };
 document.getElementById("btnTitle").onclick = (e) => { e.stopPropagation(); showTitle(); };
